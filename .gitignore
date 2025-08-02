@@ -1,0 +1,72 @@
+# Gradle Build Files
+**/build/
+**/out/
+**/.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# IDE Files (Cursor Desktop, IntelliJ, VS Code)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Kotlin Compiled
+*.class
+*.jar
+*.war
+*.ear
+*.aar
+
+# Local Configuration
+local.properties
+gradle.properties.local
+
+# API Keys and Secrets (NEVER commit these!)
+*.env
+**/secrets/
+**/*api-key*
+**/*secret*
+bybit-*.key
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary Files
+*.tmp
+*.temp
+*.log
+*.pid
+
+# Package Files
+node_modules/
+*.tgz
+*.tar.gz
+
+# Application Specific
+application-local.conf
+application-dev.conf
+logs/
+data/
+
+# Testing
+test-results/
+reports/
+
+# Coverage
+jacoco/
+coverage/
+
+# Kotlin Multiplatform
+kotlin-js-store/
+
+# Documentation Build
+docs/build/
+site/
