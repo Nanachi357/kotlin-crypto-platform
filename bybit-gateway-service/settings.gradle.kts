@@ -29,6 +29,6 @@ dependencyResolutionManagement {
     }
 }
 
-// Enable Gradle feature previews
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("VERSION_CATALOGS")
+// Enable Gradle feature previews (commented out for Gradle 9.0 compatibility)
+// enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+// enableFeaturePreview("VERSION_CATALOGS")
