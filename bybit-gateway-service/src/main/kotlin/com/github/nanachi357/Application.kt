@@ -1,6 +1,8 @@
 package com.github.nanachi357
 
+import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.plugins.configureRouting
+import com.github.nanachi357.utils.HttpClientFactory
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -18,11 +20,18 @@ fun main() {
 }
 
 fun Application.module() {
+    // Configure JSON serialization for server responses
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
             isLenient = true
         })
     }
-    configureRouting()
+    
+    // Create HTTP client for external API calls
+    val httpClient = HttpClientFactory.create()
+    val bybitClient = BybitApiClient(httpClient)
+    
+    // Configure routing with HTTP client
+    configureRouting(bybitClient)
 }

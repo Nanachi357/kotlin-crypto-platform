@@ -67,6 +67,9 @@ coverage/
 # Kotlin Multiplatform
 kotlin-js-store/
 
+# Kotlin Compiler Cache
+.kotlin/
+
 # Documentation Build
 docs/build/
 site/
