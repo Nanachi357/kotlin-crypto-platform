@@ -7,6 +7,8 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import java.time.Duration
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.LogLevel
 
 /**
  * Factory for creating configured HTTP clients for external API calls.
@@ -32,7 +34,7 @@ object HttpClientFactory {
                 })
             }
             
-                               // Request/response logging
+            // Request/response logging
             install(Logging) {
                 logger = Logger.DEFAULT
                 level = LogLevel.INFO

@@ -52,5 +52,5 @@ data class BybitTickerItem(
     val volume24h: String,
     val turnover24h: String,
     val price24hPcnt: String,
-    val usdIndexPrice: String
+    val usdIndexPrice: String? = null
 )

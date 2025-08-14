@@ -33,6 +33,8 @@ dependencies {
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-content-negotiation")
+    implementation("io.ktor:ktor-server-status-pages")
+    implementation("io.ktor:ktor-server-cors")
     
     // === KTOR CLIENT DEPENDENCIES ===
     implementation("io.ktor:ktor-client-core")
@@ -46,6 +48,7 @@ dependencies {
     
     // === LOGGING ===
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     
     // === TESTING ===
     testImplementation("io.ktor:ktor-server-tests")
