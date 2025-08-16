@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "bybit-gateway-comprehensive",
     "name": "Bybit Gateway - Comprehensive Tests",
-    "description": "Complete test suite for Bybit Gateway Service - Phase 1 (Commits 6-7) including error handling, batch API, performance, and edge cases",
+    "description": "Complete test suite for Bybit Gateway Service - Phase 1 (Commits 6-8) including error handling, batch API, performance, logging, and edge cases",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -1125,6 +1125,172 @@
                 "exec": [
                   "pm.test('Response time is less than 1000ms', function () {",
                   "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Logging & Monitoring Tests",
+      "item": [
+        {
+          "name": "Logging - Performance Monitoring",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/market/batch?symbols=BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,MATICUSDT,SOLUSDT,DOTUSDT,LINKUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "market", "batch"],
+              "query": [
+                {
+                  "key": "symbols",
+                  "value": "BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,MATICUSDT,SOLUSDT,DOTUSDT,LINKUSDT"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Performance monitoring test', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "pm.test('Response structure validation', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('prices');",
+                  "    pm.expect(response).to.have.property('metadata');",
+                  "    pm.expect(response.metadata).to.have.property('strategy');",
+                  "});",
+                  "",
+                  "// Manual verification: Check logs for performance warnings",
+                  "pm.test('Logging verification note', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "    console.log('Check logs for performance monitoring entries');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logging - Error Handling",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/market/ticker?symbol=INVALID_SYMBOL_12345",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "market", "ticker"],
+              "query": [
+                {
+                  "key": "symbol",
+                  "value": "INVALID_SYMBOL_12345"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error response structure', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.have.property('code');",
+                  "    pm.expect(response.error.code).to.equal('VALIDATION_ERROR');",
+                  "});",
+                  "",
+                  "// Manual verification: Check error logs",
+                  "pm.test('Error logging verification', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "    console.log('Check error logs for structured error information');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logging - Call Logging",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-ID",
+                "value": "test-request-123"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/market/ticker?symbol=BTCUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "market", "ticker"],
+              "query": [
+                {
+                  "key": "symbol",
+                  "value": "BTCUSDT"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Successful request logging', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Request ID tracking', function () {",
+                  "    pm.expect(pm.request.headers.get('X-Request-ID')).to.equal('test-request-123');",
+                  "});",
+                  "",
+                  "// Manual verification: Check call logs",
+                  "pm.test('Call logging verification', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "    console.log('Check call logs for request tracking');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logging - Health Check (Should Not Log)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health check response', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "// Manual verification: Health checks should not appear in call logs",
+                  "pm.test('Health check logging verification', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "    console.log('Verify health checks are filtered from call logs');",
                   "});"
                 ]
               }

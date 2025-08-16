@@ -1,14 +1,15 @@
 package com.github.nanachi357.plugins
 
 import com.github.nanachi357.models.ApiResponse
-import com.github.nanachi357.models.ErrorResponseFactory
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
 import kotlinx.serialization.SerializationException
+import mu.KotlinLogging
 import java.util.concurrent.TimeoutException
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Custom exception for not found errors
@@ -32,9 +33,9 @@ fun Application.configureErrorHandling() {
         // Handle validation errors (400 Bad Request)
         exception<IllegalArgumentException> { call, exception ->
             val path = call.request.local.uri
-            val error = ErrorResponseFactory.validationError(
-                field = "input",
+            val error = ApiResponse.Error(
                 message = exception.message ?: "Invalid input provided",
+                code = "VALIDATION_ERROR",
                 path = path
             )
             call.respond(HttpStatusCode.BadRequest, error)
@@ -43,9 +44,9 @@ fun Application.configureErrorHandling() {
         // Handle serialization errors (400 Bad Request)
         exception<SerializationException> { call, exception ->
             val path = call.request.local.uri
-            val error = ErrorResponseFactory.validationError(
-                field = "request",
+            val error = ApiResponse.Error(
                 message = "Invalid request format: ${exception.message}",
+                code = "SERIALIZATION_ERROR",
                 path = path
             )
             call.respond(HttpStatusCode.BadRequest, error)
@@ -54,9 +55,9 @@ fun Application.configureErrorHandling() {
         // Handle missing parameters (400 Bad Request)
         exception<ParameterConversionException> { call, exception ->
             val path = call.request.local.uri
-            val error = ErrorResponseFactory.validationError(
-                field = "parameter",
+            val error = ApiResponse.Error(
                 message = "Missing or invalid parameter: ${exception.message}",
+                code = "PARAMETER_ERROR",
                 path = path
             )
             call.respond(HttpStatusCode.BadRequest, error)
@@ -65,9 +66,9 @@ fun Application.configureErrorHandling() {
         // Handle not found errors (404 Not Found)
         exception<NotFoundException> { call, exception ->
             val path = call.request.local.uri
-            val error = ErrorResponseFactory.notFound(
-                resource = "endpoint",
-                identifier = path,
+            val error = ApiResponse.Error(
+                message = exception.message ?: "Resource not found",
+                code = "NOT_FOUND",
                 path = path
             )
             call.respond(HttpStatusCode.NotFound, error)
@@ -76,9 +77,9 @@ fun Application.configureErrorHandling() {
         // Handle timeout errors (504 Gateway Timeout)
         exception<TimeoutException> { call, exception ->
             val path = call.request.local.uri
-            val error = ErrorResponseFactory.externalApiError(
-                service = "external",
+            val error = ApiResponse.Error(
                 message = "Request timeout: ${exception.message}",
+                code = "TIMEOUT_ERROR",
                 path = path
             )
             call.respond(HttpStatusCode.GatewayTimeout, error)
@@ -87,8 +88,13 @@ fun Application.configureErrorHandling() {
         // Handle all other exceptions (500 Internal Server Error)
         exception<Exception> { call, exception ->
             val path = call.request.local.uri
-            println("Unhandled exception: ${exception.javaClass.simpleName} - ${exception.message}")
-            exception.printStackTrace()
+            val userAgent = call.request.headers["User-Agent"] ?: "unknown"
+            val remoteHost = call.request.local.remoteHost
+            val requestId = call.request.headers["X-Request-ID"] ?: "no-id"
+            
+            logger.error(exception) { 
+                "Unhandled exception: requestId=$requestId, path=$path, userAgent=$userAgent, remoteHost=$remoteHost" 
+            }
             
             val error = ApiResponse.Error(
                 message = "Internal server error: ${exception.message}",

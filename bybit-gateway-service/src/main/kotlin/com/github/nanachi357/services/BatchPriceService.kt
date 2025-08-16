@@ -43,26 +43,53 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
         category: MarketCategory = MarketCategory.SPOT,
         maxConcurrency: Int = DEFAULT_MAX_CONCURRENCY
     ): BatchPriceResult {
+        val startTime = System.currentTimeMillis()
         
         // Validate symbols with graceful degradation
         val validSymbols = SymbolValidator.validateSymbolsGracefully(symbols)
         if (validSymbols.isEmpty()) {
+            val duration = System.currentTimeMillis() - startTime
+            logger.warn { "Batch processing failed: no valid symbols, original=${symbols.size}, duration=${duration}ms" }
             return BatchPriceResult(
                 successful = emptyList(),
                 notFound = emptyList(),
                 errors = mapOf("validation" to "No valid symbols provided"),
-                requestTimeMs = 0,
+                requestTimeMs = duration,
                 strategy = "none",
                 category = category
             )
         }
         
+        // Log validation results
+        if (validSymbols.size < symbols.size) {
+            val filteredCount = symbols.size - validSymbols.size
+            logger.info { "Batch processing validation: original=${symbols.size}, valid=${validSymbols.size}, filtered=$filteredCount" }
+        }
+        
         // Choose optimal strategy based on symbol count
-        return when {
+        val strategy = when {
+            validSymbols.size == 1 -> "single"
+            validSymbols.size < BATCH_THRESHOLD -> "parallel"
+            else -> "batch"
+        }
+        
+        logger.info { "Batch processing started: symbols=${validSymbols.size}, strategy=$strategy, category=$category" }
+        
+        val result = when {
             validSymbols.size == 1 -> getSinglePrice(validSymbols.first(), category)
             validSymbols.size < BATCH_THRESHOLD -> getParallelPrices(validSymbols, category, maxConcurrency)
             else -> getBatchApiPrices(validSymbols, category)
         }
+        
+        val totalDuration = System.currentTimeMillis() - startTime
+        logger.info { "Batch processing completed: symbols=${validSymbols.size}, successful=${result.successful.size}, duration=${totalDuration}ms, strategy=${result.strategy}" }
+        
+        // Log performance warning for slow batch processing
+        if (totalDuration > 5000) {
+            logger.warn { "Slow batch processing: symbols=${validSymbols.size}, duration=${totalDuration}ms, strategy=${result.strategy}" }
+        }
+        
+        return result
     }
     
     /**

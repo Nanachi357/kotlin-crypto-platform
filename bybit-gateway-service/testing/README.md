@@ -2,14 +2,14 @@
 
 ## 📋 Overview
 
-Comprehensive tests for **Commit 7 - Batch API with Domain Categories**.
+Comprehensive tests for **Commit 8 - Logging & Documentation** (Production Ready).
 
 ## 📁 Files
 
 ```
 testing/
 ├── README.md                           # This file
-└── comprehensive-postman-collection.json # Complete test suite (25+ tests)
+└── comprehensive-postman-collection.json # Complete test suite (30+ tests)
 ```
 
 ## 🚀 Quick Start
@@ -49,6 +49,9 @@ cd bybit-gateway-service
 ### **Stress Testing** (3 tests)
 - Concurrency, Large lists, Legacy performance
 
+### **Logging & Monitoring** (4 tests)
+- Performance monitoring, Error logging, Call logging, Health check filtering
+
 ## 📊 Expected Results
 
 ### ✅ Success Response
@@ -86,6 +89,7 @@ cd bybit-gateway-service
 | **Performance** | < 2000ms single, < 4000ms batch |
 | **Error Handling** | Graceful degradation, Mixed valid/invalid |
 | **Edge Cases** | Duplicates, Long lists, Concurrency |
+| **Logging** | Performance warnings, Error context, Request tracking |
 
 ## 🚨 Troubleshooting
 

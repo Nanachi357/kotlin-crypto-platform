@@ -3,6 +3,7 @@ package com.github.nanachi357
 import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.plugins.configureRouting
 import com.github.nanachi357.plugins.configureErrorHandling
+import com.github.nanachi357.plugins.configureMonitoring
 import com.github.nanachi357.services.PriceService
 import com.github.nanachi357.services.BatchPriceService
 import com.github.nanachi357.utils.HttpClientFactory
@@ -13,6 +14,9 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import io.ktor.http.*
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 fun main() {
     embeddedServer(
@@ -24,6 +28,8 @@ fun main() {
 }
 
 fun Application.module() {
+    logger.info { "Starting Bybit Gateway Service..." }
+    
     // Configure JSON serialization for server responses
     install(ContentNegotiation) {
         json(Json {
@@ -39,6 +45,9 @@ fun Application.module() {
         allowHeader(HttpHeaders.ContentType)
     }
     
+    // Configure monitoring (must be before routing)
+    configureMonitoring()
+    
     // Create HTTP client for external API calls
     val httpClient = HttpClientFactory.create()
     val bybitClient = BybitApiClient(httpClient)
@@ -52,4 +61,6 @@ fun Application.module() {
     
     // Configure routing with service layer
     configureRouting(priceService, batchPriceService)
+    
+    logger.info { "Bybit Gateway Service started successfully" }
 }

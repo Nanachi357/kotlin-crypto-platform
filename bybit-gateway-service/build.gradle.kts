@@ -35,6 +35,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.ktor:ktor-server-cors")
+    implementation("io.ktor:ktor-server-call-logging")
     
     // === KTOR CLIENT DEPENDENCIES ===
     implementation("io.ktor:ktor-client-core")
