@@ -1,9 +1,15 @@
 package com.github.nanachi357.plugins
 
 import com.github.nanachi357.services.PriceService
+import com.github.nanachi357.services.BatchPriceService
 import com.github.nanachi357.models.ApiResponse
 import com.github.nanachi357.models.ServerStatus
 import com.github.nanachi357.models.MarketApiInfo
+import com.github.nanachi357.models.BatchApiResponse
+import com.github.nanachi357.models.BatchMetadata
+import com.github.nanachi357.models.PriceInfo
+import com.github.nanachi357.models.toPriceInfo
+import com.github.nanachi357.models.MarketCategory
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -11,7 +17,7 @@ import io.ktor.server.routing.*
 import java.time.Instant
 import java.util.concurrent.TimeoutException
 
-fun Application.configureRouting(priceService: PriceService) {
+fun Application.configureRouting(priceService: PriceService, batchPriceService: BatchPriceService) {
     routing {
         // Health check endpoint with structured JSON response
         get("/health") {
@@ -88,6 +94,32 @@ fun Application.configureRouting(priceService: PriceService) {
             val symbols = call.request.queryParameters["symbols"]?.split(",") ?: emptyList()
             val response = priceService.getMarketTickers(symbols)
             call.respond(response)
+        }
+        
+        // New batch processing endpoint with domain categories
+        get("/api/market/batch") {
+            val symbols = call.request.queryParameters["symbols"]?.split(",") ?: listOf("BTCUSDT", "ETHUSDT")
+            val categoryParam = call.request.queryParameters["category"] ?: "SPOT"
+            val category = MarketCategory.fromExchangeValue(categoryParam) ?: MarketCategory.SPOT
+            
+            val result = batchPriceService.getBatchPrices(symbols, category)
+            
+            val response = BatchApiResponse(
+                prices = result.successful.map { it.toPriceInfo() },
+                metadata = BatchMetadata(
+                    strategy = result.strategy,
+                    category = result.category.name,
+                    requestTimeMs = result.requestTimeMs,
+                    successCount = result.successful.size,
+                    notFoundCount = result.notFound.size,
+                    errorCount = result.errors.size,
+                    successRate = result.successRate
+                ),
+                notFound = result.notFound,
+                errors = result.errors
+            )
+            
+            call.respond(ApiResponse.Success(response))
         }
                      
         // Test endpoints for error handling validation

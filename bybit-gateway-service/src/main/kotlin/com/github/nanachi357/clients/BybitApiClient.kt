@@ -1,6 +1,7 @@
 package com.github.nanachi357.clients
 
 import com.github.nanachi357.models.bybit.*
+import com.github.nanachi357.models.MarketCategory
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -49,15 +50,15 @@ class BybitApiClient(val httpClient: HttpClient) {
      * Gets market ticker data for a specific symbol.
      * 
      * @param symbol Trading pair symbol (e.g., "BTCUSDT")
-     * @param category Market category (default: "spot")
+     * @param category Market category (default: SPOT)
      * @return Market ticker data
      */
     suspend fun getMarketTicker(
         symbol: String,
-        category: String = "spot"
+        category: MarketCategory = MarketCategory.SPOT
     ): BybitResponse<BybitTickerResult> {
         return httpClient.get("$baseUrl/v5/market/tickers") {
-            parameter("category", category)
+            parameter("category", category.exchangeValue)
             parameter("symbol", symbol)
         }.body()
     }
@@ -69,17 +70,17 @@ class BybitApiClient(val httpClient: HttpClient) {
      * For specific symbols, we make separate requests for each symbol and combine results.
      * 
      * @param symbols List of trading pair symbols (optional - if empty, returns all symbols)
-     * @param category Market category (default: "spot")
+     * @param category Market category (default: SPOT)
      * @return Market ticker data for specified symbols or all symbols
      */
     suspend fun getMarketTickers(
         symbols: List<String> = emptyList(),
-        category: String = "spot"
+        category: MarketCategory = MarketCategory.SPOT
     ): BybitResponse<BybitTickerResult> {
         // If no symbols specified, get all symbols
         if (symbols.isEmpty()) {
             return httpClient.get("$baseUrl/v5/market/tickers") {
-                parameter("category", category)
+                parameter("category", category.exchangeValue)
             }.body()
         }
         
@@ -103,7 +104,7 @@ class BybitApiClient(val httpClient: HttpClient) {
             retCode = 0,
             retMsg = "OK",
             result = BybitTickerResult(
-                category = category,
+                category = category.exchangeValue,
                 list = allTickers
             ),
             time = System.currentTimeMillis()

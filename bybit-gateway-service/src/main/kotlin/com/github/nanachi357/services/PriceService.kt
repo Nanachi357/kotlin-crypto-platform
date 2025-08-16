@@ -2,6 +2,7 @@ package com.github.nanachi357.services
 
 import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.models.ApiResponse
+import com.github.nanachi357.models.MarketCategory
 import com.github.nanachi357.models.ErrorResponseFactory
 import com.github.nanachi357.models.bybit.BybitResponse
 import com.github.nanachi357.models.bybit.BybitTickerResult
@@ -22,12 +23,12 @@ class PriceService(private val bybitClient: BybitApiClient) {
      * Gets market ticker data for a specific symbol with functional error handling.
      * 
      * @param symbol Trading pair symbol (e.g., "BTCUSDT")
-     * @param category Market category (default: "spot")
+     * @param category Market category (default: SPOT)
      * @return ApiResponse containing either success data or error information
      */
     suspend fun getMarketTicker(
         symbol: String,
-        category: String = "spot"
+        category: MarketCategory = MarketCategory.SPOT
     ): ApiResponse<BybitResponse<BybitTickerResult>> {
         // Validate symbol first (fail-fast for input validation)
         val validatedSymbol = runCatching { 
@@ -65,12 +66,12 @@ class PriceService(private val bybitClient: BybitApiClient) {
      * Gets market ticker data for multiple symbols with functional error handling.
      * 
      * @param symbols List of trading pair symbols (optional - if empty, returns all symbols)
-     * @param category Market category (default: "spot")
+     * @param category Market category (default: SPOT)
      * @return ApiResponse containing either success data or error information
      */
     suspend fun getMarketTickers(
         symbols: List<String> = emptyList(),
-        category: String = "spot"
+        category: MarketCategory = MarketCategory.SPOT
     ): ApiResponse<BybitResponse<BybitTickerResult>> {
         // Validate symbols with graceful degradation (filter out invalid ones)
         val validatedSymbols = if (symbols.isNotEmpty()) {

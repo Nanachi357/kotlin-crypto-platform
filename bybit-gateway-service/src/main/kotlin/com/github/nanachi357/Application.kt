@@ -4,6 +4,7 @@ import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.plugins.configureRouting
 import com.github.nanachi357.plugins.configureErrorHandling
 import com.github.nanachi357.services.PriceService
+import com.github.nanachi357.services.BatchPriceService
 import com.github.nanachi357.utils.HttpClientFactory
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -44,10 +45,11 @@ fun Application.module() {
     
     // Create service layer with functional error handling
     val priceService = PriceService(bybitClient)
+    val batchPriceService = BatchPriceService(bybitClient)
     
     // Configure error handling (must be before routing)
     configureErrorHandling()
     
     // Configure routing with service layer
-    configureRouting(priceService)
+    configureRouting(priceService, batchPriceService)
 }
