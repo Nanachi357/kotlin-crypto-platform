@@ -267,3 +267,27 @@ This project follows standard Kotlin and Ktor development practices:
 - Gradle build system
 - Comprehensive testing approach
 - English documentation standards
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Disclaimer
+
+**⚠️ IMPORTANT: This software is provided "as is" without warranty of any kind.**
+
+- This software may contain bugs and vulnerabilities
+- Use at your own risk
+- Always test thoroughly before using with real funds
+- Consider this experimental software
+- The authors are not responsible for any losses, damages, or issues arising from the use of this software
+- Users are responsible for their own trading decisions and risk management
+
+## Terms of Use
+
+By using this software, you agree that:
+- You use this software at your own risk
+- You are responsible for your own trading decisions
+- You understand that cryptocurrency trading involves significant risks
+- You will not hold the authors liable for any losses or damages
+- You will comply with all applicable laws and regulations
