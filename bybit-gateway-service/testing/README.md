@@ -54,7 +54,7 @@ cd bybit-gateway-service
 
 ## 📊 Expected Results
 
-### ✅ Success Response
+### Success Response
 ```json
 {
   "data": {
@@ -69,7 +69,7 @@ cd bybit-gateway-service
 }
 ```
 
-### ❌ Error Response
+### Error Response
 ```json
 {
   "data": {
@@ -80,7 +80,7 @@ cd bybit-gateway-service
 }
 ```
 
-## 🔍 Key Features Tested
+## Key Features Tested
 
 | Feature | Test Cases |
 |---------|------------|
@@ -97,9 +97,9 @@ cd bybit-gateway-service
 - **Tests failing** → Check `baseUrl` variable in Postman
 - **Performance fails** → Adjust timing thresholds if needed
 
-## 🎯 Success Criteria
+## Success Criteria
 
-**All tests pass** + **Performance targets met** + **Error handling works** = ✅ Ready for production
+**All tests pass** + **Performance targets met** + **Error handling works** = Ready for production
 
 ---
 

@@ -8,6 +8,8 @@ gradle-app.setting
 # IDE Files (Cursor Desktop, IntelliJ, VS Code)
 .idea/
 .vscode/
+.cursor/
+*.cursorrules
 *.swp
 *.swo
 *~
