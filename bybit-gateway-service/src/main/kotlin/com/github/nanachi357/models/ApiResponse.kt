@@ -28,6 +28,9 @@ sealed class ApiResponse<out T> {
      * @param timestamp When the error occurred (Unix timestamp in milliseconds)
      * @param path Request path for debugging context (optional)
      * @param details Additional context information (optional)
+     * @param exchange Exchange that returned the error (optional)
+     * @param originalCode Original error code from exchange (optional)
+     * @param httpStatus HTTP status code (optional)
      */
     @Serializable
     @SerialName("error")
@@ -36,7 +39,10 @@ sealed class ApiResponse<out T> {
         val code: String,
         val timestamp: Long = System.currentTimeMillis(),
         val path: String? = null,
-        val details: Map<String, String>? = null
+        val details: Map<String, String>? = null,
+        val exchange: String? = null,
+        val originalCode: String? = null,
+        val httpStatus: Int? = null
     ) : ApiResponse<Nothing>()
 }
 

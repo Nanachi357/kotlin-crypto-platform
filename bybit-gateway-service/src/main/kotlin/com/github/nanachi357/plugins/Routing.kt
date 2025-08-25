@@ -2,7 +2,9 @@ package com.github.nanachi357.plugins
 
 import com.github.nanachi357.services.PriceService
 import com.github.nanachi357.services.BatchPriceService
+import com.github.nanachi357.services.UniversalPriceService
 import com.github.nanachi357.models.ApiResponse
+import com.github.nanachi357.models.exchange.ExchangeApiInfo
 import com.github.nanachi357.models.ServerStatus
 import com.github.nanachi357.models.MarketApiInfo
 import com.github.nanachi357.models.BatchApiResponse
@@ -17,7 +19,7 @@ import io.ktor.server.routing.*
 import java.time.Instant
 import java.util.concurrent.TimeoutException
 
-fun Application.configureRouting(priceService: PriceService, batchPriceService: BatchPriceService) {
+fun Application.configureRouting(priceService: PriceService, batchPriceService: BatchPriceService, universalPriceService: UniversalPriceService) {
     routing {
         // Health check endpoint with structured JSON response
         get("/health") {
@@ -137,6 +139,40 @@ fun Application.configureRouting(priceService: PriceService, batchPriceService: 
         
         get("/test/unhandled") {
             throw RuntimeException("Test unhandled exception")
+        }
+        
+        // === UNIVERSAL EXCHANGE ABSTRACTION ENDPOINTS ===
+        // New endpoints using universal response format
+        
+        // Universal market endpoint - new structure
+        get("/api/v2/market/{symbol}") {
+            val symbol = call.parameters["symbol"] ?: "BTCUSDT"
+            val response = universalPriceService.getPrice(symbol)
+            call.respond(response)
+        }
+        
+        // Universal batch endpoint - new structure
+        get("/api/v2/market/batch") {
+            val symbols = call.request.queryParameters["symbols"]?.split(",") ?: listOf("BTCUSDT", "ETHUSDT")
+            val response = universalPriceService.getPrices(symbols)
+            call.respond(response)
+        }
+        
+        // Universal market info endpoint
+        get("/api/v2/market") {
+            val marketInfo = ExchangeApiInfo(
+                message = "Universal Exchange API - Phase 2",
+                endpoints = mapOf(
+                    "single_price" to "/api/v2/market/{symbol}",
+                    "batch_prices" to "/api/v2/market/batch?symbols=BTCUSDT,ETHUSDT"
+                ),
+                examples = listOf(
+                    "/api/v2/market/BTCUSDT",
+                    "/api/v2/market/batch?symbols=BTCUSDT,ETHUSDT"
+                ),
+                format = "Universal ExchangeResponse format"
+            )
+            call.respond(marketInfo)
         }
     }
 }

@@ -40,6 +40,7 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.ktor:ktor-server-cors")
     implementation("io.ktor:ktor-server-call-logging")
+    implementation("io.ktor:ktor-server-default-headers")
     
     // === KTOR CLIENT DEPENDENCIES ===
     implementation("io.ktor:ktor-client-core")
@@ -62,6 +63,8 @@ dependencies {
     // === TESTING ===
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 }
 
 // Application configuration
@@ -87,5 +90,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 // Test configuration
 tasks.withType<Test> {
     useJUnitPlatform()
-    enabled = false // Temporarily disabled for development
+    enabled = true // Enabled for testing
 }

@@ -4,8 +4,10 @@ import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.plugins.configureRouting
 import com.github.nanachi357.plugins.configureErrorHandling
 import com.github.nanachi357.plugins.configureMonitoring
+import com.github.nanachi357.plugins.configureSecurity
 import com.github.nanachi357.services.PriceService
 import com.github.nanachi357.services.BatchPriceService
+import com.github.nanachi357.services.UniversalPriceService
 import com.github.nanachi357.utils.HttpClientFactory
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -38,15 +40,13 @@ fun Application.module() {
         })
     }
     
-    // Configure CORS for web clients
-    install(io.ktor.server.plugins.cors.routing.CORS) {
-        anyHost()
-        allowMethod(HttpMethod.Get)
-        allowHeader(HttpHeaders.ContentType)
-    }
+    // CORS is now configured in Security.kt
     
     // Configure monitoring (must be before routing)
     configureMonitoring()
+    
+    // Configure security (must be before routing)
+    configureSecurity()
     
     // Create HTTP client for external API calls
     val httpClient = HttpClientFactory.create()
@@ -56,11 +56,14 @@ fun Application.module() {
     val priceService = PriceService(bybitClient)
     val batchPriceService = BatchPriceService(bybitClient)
     
+    // Create universal service layer for new exchange abstraction
+    val universalPriceService = UniversalPriceService(bybitClient)
+    
     // Configure error handling (must be before routing)
     configureErrorHandling()
     
     // Configure routing with service layer
-    configureRouting(priceService, batchPriceService)
+    configureRouting(priceService, batchPriceService, universalPriceService)
     
     logger.info { "Bybit Gateway Service started successfully" }
 }
