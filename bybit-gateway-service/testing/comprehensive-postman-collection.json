@@ -1298,6 +1298,152 @@
           ]
         }
       ]
+    },
+    {
+      "name": "8. Universal Exchange API Tests (Commit 2)",
+      "item": [
+        {
+          "name": "Universal API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Single Price - Universal Format",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/BTCUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "BTCUSDT"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Batch Prices - Universal Format",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/batch?symbols=BTCUSDT,ETHUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "batch"],
+              "query": [
+                {
+                  "key": "symbols",
+                  "value": "BTCUSDT,ETHUSDT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Large Batch - Universal Format",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/batch?symbols=BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "batch"],
+              "query": [
+                {
+                  "key": "symbols",
+                  "value": "BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error Handling - Invalid Symbol",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/INVALID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "INVALID"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error Handling - Mixed Valid/Invalid",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/batch?symbols=BTCUSDT,INVALID,ETHUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "batch"],
+              "query": [
+                {
+                  "key": "symbols",
+                  "value": "BTCUSDT,INVALID,ETHUSDT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Backward Compatibility - Old Format",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/market/BTCUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "market", "BTCUSDT"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Performance Test - Single",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/BTCUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "BTCUSDT"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Performance Test - Batch",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/market/batch?symbols=BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,MATICUSDT,SOLUSDT,DOTUSDT,LINKUSDT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "market", "batch"],
+              "query": [
+                {
+                  "key": "symbols",
+                  "value": "BTCUSDT,ETHUSDT,ADAUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,MATICUSDT,SOLUSDT,DOTUSDT,LINKUSDT"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

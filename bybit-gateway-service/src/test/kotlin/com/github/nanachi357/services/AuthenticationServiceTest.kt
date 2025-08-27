@@ -21,19 +21,26 @@ class AuthenticationServiceTest {
     
     @Test
     fun `test HMAC signature generation`() {
-        val secretKey = "test_secret_key"
         val message = "api_key=test_key&timestamp=1234567890&recv_window=5000"
         
-        val signature = signatureGenerator.generateSignature(secretKey, message)
+        // Create separate CharArrays for generation and validation
+        val secretKey1 = "test_secret_key".toCharArray()
+        val secretKey2 = "test_secret_key".toCharArray()
         
-        assertNotNull(signature)
-        assertTrue(signature.isNotBlank())
-        assertTrue(signatureGenerator.validateSignature(secretKey, message, signature))
+        try {
+            val signature = signatureGenerator.generateSignature(secretKey1, message)
+            
+            assertNotNull(signature)
+            assertTrue(signature.isNotBlank())
+            assertTrue(signatureGenerator.validateSignature(secretKey2, message, signature))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+        }
     }
     
     @Test
     fun `test generateGetSignature with sorted parameters`() {
-        val secretKey = "test_secret"
         val timestamp = 1234567890L
         val queryParams = mapOf(
             "z" to "last",
@@ -41,52 +48,72 @@ class AuthenticationServiceTest {
             "b" to "second"
         )
         
-        val signature = signatureGenerator.generateGetSignature(secretKey, timestamp, queryParams)
+        // Create separate CharArrays for generation and validation
+        val secretKey1 = "test_secret".toCharArray()
+        val secretKey2 = "test_secret".toCharArray()
         
-        assertNotNull(signature)
-        assertTrue(signature.isNotBlank())
-        
-        // Verify that parameters are sorted alphabetically
-        val expectedQueryString = "a=first&b=second&z=last"
-        assertTrue(signatureGenerator.validateSignature(secretKey, expectedQueryString, signature))
+        try {
+            val signature = signatureGenerator.generateGetSignature(secretKey1, timestamp, queryParams)
+            
+            assertNotNull(signature)
+            assertTrue(signature.isNotBlank())
+            
+            // Verify that parameters are sorted alphabetically
+            val expectedQueryString = "a=first&b=second&z=last"
+            assertTrue(signatureGenerator.validateSignature(secretKey2, expectedQueryString, signature))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+        }
     }
     
     @Test
     fun `test generatePostSignature with timestamp concatenation`() {
-        val secretKey = "test_secret"
         val timestamp = 1234567890L
         val jsonBody = """{"symbol":"BTCUSDT"}"""
         
-        val signature = signatureGenerator.generatePostSignature(secretKey, timestamp, jsonBody)
+        // Create separate CharArrays for generation and validation
+        val secretKey1 = "test_secret".toCharArray()
+        val secretKey2 = "test_secret".toCharArray()
         
-        assertNotNull(signature)
-        assertTrue(signature.isNotBlank())
-        
-        // Verify that message is timestamp + jsonBody
-        val expectedMessage = "$timestamp$jsonBody"
-        assertTrue(signatureGenerator.validateSignature(secretKey, expectedMessage, signature))
+        try {
+            val signature = signatureGenerator.generatePostSignature(secretKey1, timestamp, jsonBody)
+            
+            assertNotNull(signature)
+            assertTrue(signature.isNotBlank())
+            
+            // Verify that message is timestamp + jsonBody
+            val expectedMessage = "$timestamp$jsonBody"
+            assertTrue(signatureGenerator.validateSignature(secretKey2, expectedMessage, signature))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+        }
     }
     
     @Test
     fun `test signature generation with empty parameters`() {
-        val secretKey = "test_secret"
+        val secretKey = "test_secret".toCharArray()
         val timestamp = 1234567890L
         
-        // Empty query params should work (empty string)
-        val emptyGetSignature = signatureGenerator.generateGetSignature(secretKey, timestamp, emptyMap())
-        
-        // Empty JSON body should work (empty string)
-        val emptyPostSignature = signatureGenerator.generatePostSignature(secretKey, timestamp, "")
-        
-        assertNotNull(emptyGetSignature)
-        assertNotNull(emptyPostSignature)
-        assertTrue(emptyGetSignature.isNotBlank())
-        assertTrue(emptyPostSignature.isNotBlank())
+        try {
+            // Empty query params should work (empty string)
+            val emptyGetSignature = signatureGenerator.generateGetSignature(secretKey, timestamp, emptyMap())
+            
+            // Empty JSON body should work (empty string)
+            val emptyPostSignature = signatureGenerator.generatePostSignature(secretKey, timestamp, "")
+            
+            assertNotNull(emptyGetSignature)
+            assertNotNull(emptyPostSignature)
+            assertTrue(emptyGetSignature.isNotBlank())
+            assertTrue(emptyPostSignature.isNotBlank())
+        } finally {
+            secretKey.fill('\u0000')
+        }
     }
     
     @Test
     fun `test signature generation with special characters`() {
-        val secretKey = "test_secret"
         val timestamp = 1234567890L
         val specialParams = mapOf(
             "symbol" to "BTC/USDT",
@@ -94,14 +121,23 @@ class AuthenticationServiceTest {
             "amount" to "0.001"
         )
         
-        val signature = signatureGenerator.generateGetSignature(secretKey, timestamp, specialParams)
+        // Create separate CharArrays for generation and validation
+        val secretKey1 = "test_secret".toCharArray()
+        val secretKey2 = "test_secret".toCharArray()
         
-        assertNotNull(signature)
-        assertTrue(signature.isNotBlank())
-        
-        // Verify sorted parameters with special characters
-        val expectedQueryString = "amount=0.001&price=50,000.00&symbol=BTC/USDT"
-        assertTrue(signatureGenerator.validateSignature(secretKey, expectedQueryString, signature))
+        try {
+            val signature = signatureGenerator.generateGetSignature(secretKey1, timestamp, specialParams)
+            
+            assertNotNull(signature)
+            assertTrue(signature.isNotBlank())
+            
+            // Verify sorted parameters with special characters
+            val expectedQueryString = "amount=0.001&price=50,000.00&symbol=BTC/USDT"
+            assertTrue(signatureGenerator.validateSignature(secretKey2, expectedQueryString, signature))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+        }
     }
     
     @Test
@@ -317,25 +353,40 @@ class AuthenticationServiceTest {
     
     @Test
     fun `test signature validation with different messages`() {
-        val secretKey = "test_secret"
         val message1 = "test_message_1"
         val message2 = "test_message_2"
         
-        val signature1 = signatureGenerator.generateSignature(secretKey, message1)
-        val signature2 = signatureGenerator.generateSignature(secretKey, message2)
+        // Create separate CharArrays for each operation
+        val secretKey1 = "test_secret".toCharArray()
+        val secretKey2 = "test_secret".toCharArray()
+        val secretKey3 = "test_secret".toCharArray()
+        val secretKey4 = "test_secret".toCharArray()
+        val secretKey5 = "test_secret".toCharArray()
+        val secretKey6 = "test_secret".toCharArray()
         
-        // Same message should validate
-        assertTrue(signatureGenerator.validateSignature(secretKey, message1, signature1))
-        assertTrue(signatureGenerator.validateSignature(secretKey, message2, signature2))
-        
-        // Different messages should not validate
-        assertFalse(signatureGenerator.validateSignature(secretKey, message1, signature2))
-        assertFalse(signatureGenerator.validateSignature(secretKey, message2, signature1))
+        try {
+            val signature1 = signatureGenerator.generateSignature(secretKey1, message1)
+            val signature2 = signatureGenerator.generateSignature(secretKey2, message2)
+            
+            // Same message should validate
+            assertTrue(signatureGenerator.validateSignature(secretKey3, message1, signature1))
+            assertTrue(signatureGenerator.validateSignature(secretKey4, message2, signature2))
+            
+            // Different messages should not validate
+            assertFalse(signatureGenerator.validateSignature(secretKey5, message1, signature2))
+            assertFalse(signatureGenerator.validateSignature(secretKey6, message2, signature1))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+            secretKey3.fill('\u0000')
+            secretKey4.fill('\u0000')
+            secretKey5.fill('\u0000')
+            secretKey6.fill('\u0000')
+        }
     }
     
     @Test
     fun `test signature generation with unicode characters`() {
-        val secretKey = "test_secret"
         val timestamp = 1234567890L
         val unicodeParams = mapOf(
             "symbol" to "BTC/USDT",
@@ -343,13 +394,22 @@ class AuthenticationServiceTest {
             "description" to "Криптовалюта"
         )
         
-        val signature = signatureGenerator.generateGetSignature(secretKey, timestamp, unicodeParams)
+        // Create separate CharArrays for generation and validation
+        val secretKey1 = "test_secret".toCharArray()
+        val secretKey2 = "test_secret".toCharArray()
         
-        assertNotNull(signature)
-        assertTrue(signature.isNotBlank())
-        
-        // Verify sorted parameters with unicode
-        val expectedQueryString = "description=Криптовалюта&name=Bitcoin&symbol=BTC/USDT"
-        assertTrue(signatureGenerator.validateSignature(secretKey, expectedQueryString, signature))
+        try {
+            val signature = signatureGenerator.generateGetSignature(secretKey1, timestamp, unicodeParams)
+            
+            assertNotNull(signature)
+            assertTrue(signature.isNotBlank())
+            
+            // Verify sorted parameters with unicode
+            val expectedQueryString = "description=Криптовалюта&name=Bitcoin&symbol=BTC/USDT"
+            assertTrue(signatureGenerator.validateSignature(secretKey2, expectedQueryString, signature))
+        } finally {
+            secretKey1.fill('\u0000')
+            secretKey2.fill('\u0000')
+        }
     }
 }

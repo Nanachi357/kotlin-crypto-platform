@@ -25,11 +25,13 @@ class HmacSignatureGenerator {
      */
     fun generateSignature(secretKey: CharArray, message: String): String {
         require(secretKey.isNotEmpty()) { "Secret key cannot be empty" }
-        require(message.isNotBlank()) { "Message cannot be empty or blank" }
+        require(secretKey.any { it != ' ' }) { "Secret key cannot be blank" }
+        // Allow empty messages for empty query parameters
+        // require(message.isNotEmpty()) { "Message cannot be empty" }
 
         return try {
             val mac = Mac.getInstance("HmacSHA256")
-            val secretKeySpec = SecretKeySpec(secretKey.toString().toByteArray(), "HmacSHA256")
+            val secretKeySpec = SecretKeySpec(String(secretKey).toByteArray(), "HmacSHA256")
             mac.init(secretKeySpec)
 
             val hash = mac.doFinal(message.toByteArray())
@@ -45,6 +47,29 @@ class HmacSignatureGenerator {
     }
 
     /**
+     * Private method for signature generation without clearing the secretKey
+     * Used internally by validateSignature
+     */
+    private fun generateSignatureInternal(secretKey: CharArray, message: String): String {
+        require(secretKey.isNotEmpty()) { "Secret key cannot be empty" }
+        require(secretKey.any { it != ' ' }) { "Secret key cannot be blank" }
+
+        return try {
+            val mac = Mac.getInstance("HmacSHA256")
+            val secretKeySpec = SecretKeySpec(String(secretKey).toByteArray(), "HmacSHA256")
+            mac.init(secretKeySpec)
+
+            val hash = mac.doFinal(message.toByteArray())
+            Base64.getEncoder().encodeToString(hash)
+
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to generate HMAC signature" }
+            throw SecurityException("Signature generation failed", e)
+        }
+        // Note: No finally block - secretKey is not cleared here
+    }
+
+    /**
      * Generate HMAC-SHA256 signature for Bybit API request (String version for backward compatibility)
      * 
      * @param secretKey The API secret key as String
@@ -55,7 +80,8 @@ class HmacSignatureGenerator {
     @Deprecated("Use CharArray version for better security", ReplaceWith("generateSignature(secretKey.toCharArray(), message)"))
     fun generateSignature(secretKey: String, message: String): String {
         require(secretKey.isNotBlank()) { "Secret key cannot be empty or blank" }
-        require(message.isNotBlank()) { "Message cannot be empty or blank" }
+        // Allow empty messages for empty query parameters
+        // require(message.isNotEmpty()) { "Message cannot be empty" }
 
         val secretKeyArray = secretKey.toCharArray()
         return try {
@@ -80,8 +106,12 @@ class HmacSignatureGenerator {
         queryParams: Map<String, String>
     ): String {
         val sortedParams = queryParams.toSortedMap()
-        val queryString = sortedParams.entries
-            .joinToString("&") { "${it.key}=${it.value}" }
+        val queryString = if (sortedParams.isEmpty()) {
+            "" // Allow empty string for empty params
+        } else {
+            sortedParams.entries
+                .joinToString("&") { "${it.key}=${it.value}" }
+        }
         
         logger.debug { "Signing GET request with ${queryParams.size} parameters" }
         return generateSignature(secretKey, queryString)
@@ -164,7 +194,13 @@ class HmacSignatureGenerator {
         message: String, 
         expectedSignature: String
     ): Boolean {
-        val actualSignature = generateSignature(secretKey, message)
+        // Create a copy to avoid clearing the original
+        val secretKeyCopy = secretKey.copyOf()
+        val actualSignature = try {
+            generateSignatureInternal(secretKeyCopy, message)
+        } finally {
+            secretKeyCopy.fill('\u0000')
+        }
         return MessageDigest.isEqual(
             actualSignature.toByteArray(), 
             expectedSignature.toByteArray()
