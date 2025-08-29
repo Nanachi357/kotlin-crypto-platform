@@ -3,6 +3,7 @@ package com.github.nanachi357.services
 import com.github.nanachi357.models.*
 import com.github.nanachi357.utils.HmacSignatureGenerator
 import com.github.nanachi357.utils.SecureLoggingUtils
+import com.github.nanachi357.services.CredentialService
 import mu.KotlinLogging
 import java.util.*
 import java.nio.charset.StandardCharsets
@@ -19,18 +20,12 @@ import java.nio.charset.StandardCharsets
  * - Enhanced security measures
  */
 class AuthenticationService(
-    private val credentialManager: SecureCredentialManager,
     private val nonceManager: NonceManager = NonceManager(),
-    private val signatureValidator: RequestSignatureValidator = RequestSignatureValidator(credentialManager, NonceManager())
+    private val signatureValidator: RequestSignatureValidator = RequestSignatureValidator(NonceManager())
 ) {
     
     private val logger = KotlinLogging.logger {}
     private val signatureGenerator = HmacSignatureGenerator()
-    
-    /**
-     * Constructor with default environment credential manager
-     */
-    constructor() : this(EnvironmentCredentialManager())
     
     /**
      * Generate nonce for request replay protection
@@ -95,9 +90,9 @@ class AuthenticationService(
     ): BybitAuthHeaders {
         val timestamp = System.currentTimeMillis()
         
-        // Get credentials from secure manager
-        val apiKey = credentialManager.getApiKey()
-        val secretKeyBytes = credentialManager.getSecretKey()
+        // Get credentials from service
+        val apiKey = CredentialService.getApiKey()
+        val secretKeyBytes = CredentialService.getSecretKey()
         
         // Add required authentication parameters
         val authParams = queryParams.toMutableMap()
@@ -140,9 +135,9 @@ class AuthenticationService(
     ): BybitAuthHeaders {
         val timestamp = System.currentTimeMillis()
         
-        // Get credentials from secure manager
-        val apiKey = credentialManager.getApiKey()
-        val secretKeyBytes = credentialManager.getSecretKey()
+        // Get credentials from service
+        val apiKey = CredentialService.getApiKey()
+        val secretKeyBytes = CredentialService.getSecretKey()
         
         // SECURITY: Use CharArray for secure memory handling
         val secretKeyArray = String(secretKeyBytes, StandardCharsets.UTF_8).toCharArray()

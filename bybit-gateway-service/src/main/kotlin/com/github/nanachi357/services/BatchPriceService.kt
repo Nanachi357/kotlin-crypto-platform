@@ -1,13 +1,14 @@
 package com.github.nanachi357.services
 
-import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.models.ApiResponse
 import com.github.nanachi357.models.MarketCategory
 import com.github.nanachi357.models.bybit.BybitResponse
 import com.github.nanachi357.models.bybit.BybitTickerResult
 import com.github.nanachi357.models.bybit.BybitTickerItem
+import com.github.nanachi357.models.exchange.*
 import com.github.nanachi357.validation.SymbolValidator
 import com.github.nanachi357.models.ErrorResponseFactory
+import com.github.nanachi357.exchanges.BybitExchangeService
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -21,7 +22,7 @@ import mu.KotlinLogging
  * Implements parallel processing strategies and batch API optimization.
  * Supports different market categories (SPOT, LINEAR, INVERSE, OPTION).
  */
-class BatchPriceService(private val bybitClient: BybitApiClient) {
+class BatchPriceService {
     
     private val logger = KotlinLogging.logger {}
     
@@ -51,7 +52,7 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
             val duration = System.currentTimeMillis() - startTime
             logger.warn { "Batch processing failed: no valid symbols, original=${symbols.size}, duration=${duration}ms" }
             return BatchPriceResult(
-                successful = emptyList(),
+                successful = emptyList<PriceData>(),
                 notFound = emptyList(),
                 errors = mapOf("validation" to "No valid symbols provided"),
                 requestTimeMs = duration,
@@ -101,12 +102,12 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
     ): BatchPriceResult {
         val startTime = System.currentTimeMillis()
         try {
-            val response = bybitClient.getMarketTicker(symbol, category)
+            val response = BybitExchangeService.getPrice(symbol)
             val requestTimeMs = System.currentTimeMillis() - startTime
             
-            if (response.retCode == 0 && response.result.list.isNotEmpty()) {
+            if (response.success && response.data != null) {
                 return BatchPriceResult(
-                    successful = response.result.list,
+                    successful = listOf(response.data),
                     notFound = emptyList(),
                     errors = emptyMap(),
                     requestTimeMs = requestTimeMs,
@@ -115,7 +116,7 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
                 )
             } else {
                 return BatchPriceResult(
-                    successful = emptyList(),
+                    successful = emptyList<PriceData>(),
                     notFound = listOf(symbol),
                     errors = mapOf(symbol to "Symbol not found"),
                     requestTimeMs = requestTimeMs,
@@ -127,7 +128,7 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
             val requestTimeMs = System.currentTimeMillis() - startTime
             logger.error(e) { "Failed to fetch single price for $symbol" }
             return BatchPriceResult(
-                successful = emptyList(),
+                successful = emptyList<PriceData>(),
                 notFound = emptyList(),
                 errors = mapOf(symbol to (e.message ?: "Unknown error")),
                 requestTimeMs = requestTimeMs,
@@ -152,9 +153,9 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
             async {
                 semaphore.withPermit {
                     try {
-                        val response = bybitClient.getMarketTicker(symbol, category)
-                        if (response.retCode == 0 && response.result.list.isNotEmpty()) {
-                            PriceResult.Success(response.result.list.first())
+                        val response = BybitExchangeService.getPrice(symbol)
+                        if (response.success && response.data != null) {
+                            PriceResult.Success(response.data)
                         } else {
                             PriceResult.NotFound(symbol)
                         }
@@ -193,14 +194,14 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
         val startTime = System.currentTimeMillis()
         try {
             // Get all symbols for the category and filter locally
-            val response = bybitClient.getMarketTickers(emptyList(), category)
+            val response = BybitExchangeService.getPrices(emptyList())
             val requestTimeMs = System.currentTimeMillis() - startTime
             
-            if (response.retCode == 0) {
-                val allTickers = response.result.list
+            if (response.success && response.data != null) {
+                val allPrices = response.data.prices
                 val requestedSymbolsSet = symbols.toSet()
                 
-                val successful = allTickers.filter { it.symbol in requestedSymbolsSet }
+                val successful = allPrices.filter { it.symbol in requestedSymbolsSet }
                 val foundSymbols = successful.map { it.symbol }.toSet()
                 val notFound = symbols.filter { it !in foundSymbols }
                 
@@ -216,9 +217,9 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
                 )
             } else {
                 return BatchPriceResult(
-                    successful = emptyList(),
+                    successful = emptyList<PriceData>(),
                     notFound = emptyList(),
-                    errors = mapOf("api" to "Batch API error: ${response.retMsg}"),
+                    errors = mapOf("api" to "Batch API error: ${response.error ?: "Unknown error"}"),
                     requestTimeMs = requestTimeMs,
                     strategy = "batch",
                     category = category
@@ -228,7 +229,7 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
             val requestTimeMs = System.currentTimeMillis() - startTime
             logger.error(e) { "Failed to fetch batch prices" }
             return BatchPriceResult(
-                successful = emptyList(),
+                successful = emptyList<PriceData>(),
                 notFound = emptyList(),
                 errors = mapOf("exception" to (e.message ?: "Unknown error")),
                 requestTimeMs = requestTimeMs,
@@ -243,7 +244,7 @@ class BatchPriceService(private val bybitClient: BybitApiClient) {
  * Result of batch price processing
  */
 data class BatchPriceResult(
-    val successful: List<BybitTickerItem>,
+    val successful: List<PriceData>,
     val notFound: List<String>,
     val errors: Map<String, String>,
     val requestTimeMs: Long,
@@ -258,7 +259,7 @@ data class BatchPriceResult(
  * Individual price result for parallel processing
  */
 sealed class PriceResult {
-    data class Success(val price: BybitTickerItem) : PriceResult()
+    data class Success(val price: PriceData) : PriceResult()
     data class NotFound(val symbol: String) : PriceResult()
     data class Error(val symbol: String, val message: String) : PriceResult()
 }

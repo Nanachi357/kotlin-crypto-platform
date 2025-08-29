@@ -2,14 +2,9 @@ package com.github.nanachi357.services
 
 import kotlin.test.*
 
-class EnvironmentCredentialManagerTest {
+class CredentialServiceTest {
     
-    private lateinit var credentialManager: EnvironmentCredentialManager
-    
-    @BeforeTest
-    fun setup() {
-        credentialManager = EnvironmentCredentialManager()
-    }
+    // No need to create instance since CredentialService is an object
     
     @Test
     fun `test getApiKey when environment variable is set`() {
@@ -20,7 +15,7 @@ class EnvironmentCredentialManagerTest {
         // Ensure environment variable is not set for this test
         // (We can't easily set environment variables in unit tests)
         assertFailsWith<SecurityException> {
-            credentialManager.getApiKey()
+            CredentialService.getApiKey()
         }
     }
     
@@ -30,7 +25,7 @@ class EnvironmentCredentialManagerTest {
         System.clearProperty("BYBIT_API_KEY")
         
         assertFailsWith<SecurityException> {
-            credentialManager.getApiKey()
+            CredentialService.getApiKey()
         }
     }
     
@@ -42,7 +37,7 @@ class EnvironmentCredentialManagerTest {
         
         // For now, we'll test the "not set" case which is more common
         assertFailsWith<SecurityException> {
-            credentialManager.getApiKey()
+            CredentialService.getApiKey()
         }
     }
     
@@ -55,7 +50,7 @@ class EnvironmentCredentialManagerTest {
         // Ensure environment variable is not set for this test
         // (We can't easily set environment variables in unit tests)
         assertFailsWith<SecurityException> {
-            credentialManager.getSecretKey()
+            CredentialService.getSecretKey()
         }
     }
     
@@ -65,7 +60,7 @@ class EnvironmentCredentialManagerTest {
         System.clearProperty("BYBIT_SECRET_KEY")
         
         assertFailsWith<SecurityException> {
-            credentialManager.getSecretKey()
+            CredentialService.getSecretKey()
         }
     }
     
@@ -77,13 +72,13 @@ class EnvironmentCredentialManagerTest {
         
         // For now, we'll test the "not set" case which is more common
         assertFailsWith<SecurityException> {
-            credentialManager.getSecretKey()
+            CredentialService.getSecretKey()
         }
     }
     
     @Test
     fun `test clearCredentials does not throw exception`() {
         // This should not throw any exception
-        credentialManager.clearCredentials()
+        CredentialService.clearCredentials()
     }
 }

@@ -48,3 +48,13 @@ fun BybitTickerItem.toPriceInfo(): PriceInfo = PriceInfo(
     price24hPcnt = price24hPcnt,
     volume24h = volume24h
 )
+
+/**
+ * Extension function to convert PriceData to PriceInfo
+ */
+fun com.github.nanachi357.models.exchange.PriceData.toPriceInfo(): PriceInfo = PriceInfo(
+    symbol = symbol,
+    lastPrice = price,
+    price24hPcnt = change24h ?: "0",
+    volume24h = volume24h ?: "0"
+)

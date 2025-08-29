@@ -4,6 +4,7 @@ import com.github.nanachi357.models.BybitAuthHeaders
 import com.github.nanachi357.utils.HmacSignatureGenerator
 import com.github.nanachi357.utils.SecureLoggingUtils
 import com.github.nanachi357.utils.RequestValidator
+import com.github.nanachi357.services.CredentialService
 import mu.KotlinLogging
 import java.security.MessageDigest
 import java.nio.charset.StandardCharsets
@@ -18,7 +19,6 @@ import java.nio.charset.StandardCharsets
  * - Nonce validation (one-time use tokens)
  */
 class RequestSignatureValidator(
-    private val credentialManager: SecureCredentialManager,
     private val nonceManager: NonceManager
 ) {
     
@@ -63,7 +63,7 @@ class RequestSignatureValidator(
             }
             
             // Step 3: Validate API key
-            val expectedApiKey = credentialManager.getApiKey()
+            val expectedApiKey = CredentialService.getApiKey()
             if (headers.apiKey != expectedApiKey) {
                 logger.warn { "Invalid API key: ${SecureLoggingUtils.maskApiKey(headers.apiKey)}" }
                 return SignatureValidationResult(
@@ -127,7 +127,7 @@ class RequestSignatureValidator(
      */
     fun verifyDataIntegrity(payload: String, signature: String): Boolean {
         try {
-            val secretKeyBytes = credentialManager.getSecretKey()
+            val secretKeyBytes = CredentialService.getSecretKey()
             val secretKeyArray = String(secretKeyBytes, StandardCharsets.UTF_8).toCharArray()
             
             val expectedSignature = try {
@@ -192,7 +192,7 @@ class RequestSignatureValidator(
         timestamp: Long
     ): String {
         
-        val secretKeyBytes = credentialManager.getSecretKey()
+        val secretKeyBytes = CredentialService.getSecretKey()
         val secretKeyArray = String(secretKeyBytes, StandardCharsets.UTF_8).toCharArray()
         
         return try {

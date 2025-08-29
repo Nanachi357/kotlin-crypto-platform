@@ -3,20 +3,26 @@ package com.github.nanachi357.services
 import mu.KotlinLogging
 
 /**
- * Environment-based credential manager for development and testing
+ * Credential service for handling API credentials
  * 
  * Reads API credentials from environment variables:
  * - BYBIT_API_KEY: API key for Bybit
  * - BYBIT_SECRET_KEY: Secret key for Bybit
  * 
- * This implementation is suitable for development and testing environments
- * but should not be used in production due to security concerns.
+ * This is a simple implementation suitable for development and testing.
+ * For production, consider using secure credential storage solutions.
  */
-class EnvironmentCredentialManager : SecureCredentialManager {
+object CredentialService {
     
     private val logger = KotlinLogging.logger {}
     
-    override fun getSecretKey(): ByteArray {
+    /**
+     * Get API secret key as ByteArray for secure memory handling
+     * 
+     * @return Secret key as ByteArray
+     * @throws SecurityException if secret key cannot be retrieved
+     */
+    fun getSecretKey(): ByteArray {
         val secretKey = System.getenv("BYBIT_SECRET_KEY")
             ?: throw SecurityException("BYBIT_SECRET_KEY environment variable not set")
         
@@ -28,7 +34,13 @@ class EnvironmentCredentialManager : SecureCredentialManager {
         return secretKey.toByteArray()
     }
     
-    override fun getApiKey(): String {
+    /**
+     * Get API key as String
+     * 
+     * @return API key
+     * @throws SecurityException if API key cannot be retrieved
+     */
+    fun getApiKey(): String {
         val apiKey = System.getenv("BYBIT_API_KEY")
             ?: throw SecurityException("BYBIT_API_KEY environment variable not set")
         
@@ -40,9 +52,13 @@ class EnvironmentCredentialManager : SecureCredentialManager {
         return apiKey
     }
     
-    override fun clearCredentials() {
-        // Environment variables cannot be cleared programmatically
-        // This is a limitation of this implementation
+    /**
+     * Clear any cached credentials from memory
+     * 
+     * This method is a placeholder for future implementations that might cache credentials.
+     * Currently, environment variables cannot be cleared programmatically.
+     */
+    fun clearCredentials() {
         logger.debug { "Environment variables cannot be cleared programmatically" }
     }
 }

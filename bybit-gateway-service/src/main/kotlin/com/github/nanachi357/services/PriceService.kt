@@ -1,12 +1,13 @@
 package com.github.nanachi357.services
 
-import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.models.ApiResponse
 import com.github.nanachi357.models.MarketCategory
 import com.github.nanachi357.models.ErrorResponseFactory
 import com.github.nanachi357.models.bybit.BybitResponse
 import com.github.nanachi357.models.bybit.BybitTickerResult
+import com.github.nanachi357.models.exchange.*
 import com.github.nanachi357.validation.SymbolValidator
+import com.github.nanachi357.exchanges.BybitExchangeService
 import mu.KotlinLogging
 
 /**
@@ -15,7 +16,7 @@ import mu.KotlinLogging
  * Implements graceful degradation pattern for non-critical market data operations.
  * Uses runCatching for safe execution and consistent error handling.
  */
-class PriceService(private val bybitClient: BybitApiClient) {
+class PriceService {
     
     private val logger = KotlinLogging.logger {}
     
@@ -29,7 +30,7 @@ class PriceService(private val bybitClient: BybitApiClient) {
     suspend fun getMarketTicker(
         symbol: String,
         category: MarketCategory = MarketCategory.SPOT
-    ): ApiResponse<BybitResponse<BybitTickerResult>> {
+    ): ApiResponse<ExchangeResponse<PriceData>> {
         val startTime = System.currentTimeMillis()
         
         // Validate symbol first (fail-fast for input validation)
@@ -40,15 +41,15 @@ class PriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.warn { "Symbol validation failed: symbol=$symbol, duration=${duration}ms, error=${exception.message}" }
-                return ErrorResponseFactory.validationError(
-                    field = "symbol",
-                    message = exception.message ?: "Invalid format"
+                return ApiResponse.Error(
+                    message = "Invalid symbol: ${exception.message ?: "Invalid format"}",
+                    code = "VALIDATION_ERROR"
                 )
             }
         )
         
         return runCatching { 
-            bybitClient.getMarketTicker(validatedSymbol, category) 
+            BybitExchangeService.getPrice(validatedSymbol)
         }.fold(
             onSuccess = { 
                 val duration = System.currentTimeMillis() - startTime
@@ -64,9 +65,9 @@ class PriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.error(exception) { "Market data fetch failed: symbol=$validatedSymbol, category=$category, duration=${duration}ms" }
-                ErrorResponseFactory.marketDataError(
-                    symbol = validatedSymbol,
-                    message = exception.message ?: "Unknown error"
+                ApiResponse.Error(
+                    message = "Market data error for $validatedSymbol: ${exception.message ?: "Unknown error"}",
+                    code = "MARKET_DATA_ERROR"
                 )
             }
         )
@@ -82,7 +83,7 @@ class PriceService(private val bybitClient: BybitApiClient) {
     suspend fun getMarketTickers(
         symbols: List<String> = emptyList(),
         category: MarketCategory = MarketCategory.SPOT
-    ): ApiResponse<BybitResponse<BybitTickerResult>> {
+    ): ApiResponse<ExchangeResponse<BatchPriceResponse>> {
         val startTime = System.currentTimeMillis()
         
         // Validate symbols with graceful degradation (filter out invalid ones)
@@ -91,9 +92,9 @@ class PriceService(private val bybitClient: BybitApiClient) {
             if (validSymbols.isEmpty()) {
                 val duration = System.currentTimeMillis() - startTime
                 logger.warn { "All symbols validation failed: symbols=$symbols, duration=${duration}ms" }
-                return ErrorResponseFactory.validationError(
-                    field = "symbols",
-                    message = "No valid symbols provided. All symbols failed validation."
+                return ApiResponse.Error(
+                    message = "No valid symbols provided. All symbols failed validation.",
+                    code = "VALIDATION_ERROR"
                 )
             }
             if (validSymbols.size < symbols.size) {
@@ -106,7 +107,7 @@ class PriceService(private val bybitClient: BybitApiClient) {
         }
         
         return runCatching { 
-            bybitClient.getMarketTickers(validatedSymbols, category) 
+            BybitExchangeService.getPrices(validatedSymbols)
         }.fold(
             onSuccess = { 
                 val duration = System.currentTimeMillis() - startTime
@@ -123,9 +124,9 @@ class PriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.error(exception) { "Market data fetch failed: symbols=${validatedSymbols.size}, category=$category, duration=${duration}ms" }
-                ErrorResponseFactory.marketDataError(
-                    symbol = "multiple",
-                    message = exception.message ?: "Unknown error"
+                ApiResponse.Error(
+                    message = "Market data error for multiple symbols: ${exception.message ?: "Unknown error"}",
+                    code = "MARKET_DATA_ERROR"
                 )
             }
         )
@@ -136,11 +137,11 @@ class PriceService(private val bybitClient: BybitApiClient) {
      * 
      * @return ApiResponse containing either server time or error information
      */
-    suspend fun getServerTime(): ApiResponse<BybitResponse<com.github.nanachi357.models.bybit.BybitTimeResult>> {
+    suspend fun getServerTime(): ApiResponse<ExchangeResponse<Long>> {
         val startTime = System.currentTimeMillis()
         
         return runCatching { 
-            bybitClient.getServerTime() 
+            BybitExchangeService.getServerTime()
         }.fold(
             onSuccess = { 
                 val duration = System.currentTimeMillis() - startTime
@@ -150,8 +151,9 @@ class PriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.error(exception) { "Server time fetch failed: duration=${duration}ms" }
-                ErrorResponseFactory.serverTimeError(
-                    message = exception.message ?: "Unknown error"
+                ApiResponse.Error(
+                    message = "Server time error: ${exception.message ?: "Unknown error"}",
+                    code = "SERVER_TIME_ERROR"
                 )
             }
         )

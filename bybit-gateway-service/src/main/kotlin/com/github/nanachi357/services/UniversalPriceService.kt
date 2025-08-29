@@ -1,12 +1,12 @@
 package com.github.nanachi357.services
 
-import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.models.exchange.*
 import com.github.nanachi357.models.bybit.BybitTickerItem
 import com.github.nanachi357.validation.SymbolValidator
 import com.github.nanachi357.validation.SecurityValidator
 import com.github.nanachi357.validation.ValidationResult
 import com.github.nanachi357.utils.ResponseMapper
+import com.github.nanachi357.exchanges.BybitExchangeService
 import mu.KotlinLogging
 
 /**
@@ -14,7 +14,7 @@ import mu.KotlinLogging
  * 
  * Implements universal response format for multi-exchange support.
  */
-class UniversalPriceService(private val bybitClient: BybitApiClient) {
+class UniversalPriceService {
     
     private val logger = KotlinLogging.logger {}
     
@@ -39,7 +39,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
             }
             is ValidationResult.Error -> {
                 SecurityValidator.logSecurityEvent("Invalid symbol input", mapOf("symbol" to symbol))
-                return ResponseMapper.error(
+                return ResponseMapper.error<PriceData>(
                     error = securityValidation.message,
                     exchange = Exchange.BYBIT
                 )
@@ -54,7 +54,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.warn { "Symbol validation failed: symbol=$symbol, duration=${duration}ms, error=${exception.message}" }
-                return ResponseMapper.error(
+                return ResponseMapper.error<PriceData>(
                     error = exception.message ?: "Invalid format",
                     exchange = Exchange.BYBIT
                 )
@@ -62,7 +62,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
         )
         
         return runCatching { 
-            bybitClient.getMarketTicker(validatedSymbol, category) 
+            BybitExchangeService.getPrice(validatedSymbol)
         }.fold(
             onSuccess = { bybitResponse ->
                 val duration = System.currentTimeMillis() - startTime
@@ -74,18 +74,17 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
                 }
                 
                 // Transform to universal format
-                if (bybitResponse.retCode == 0 && bybitResponse.result.list.isNotEmpty()) {
-                    val tickerItem = bybitResponse.result.list.first()
-                    val priceData = ResponseMapper.mapBybitTickerToPriceData(tickerItem)
-                    ResponseMapper.success(
+                if (bybitResponse.success && bybitResponse.data != null) {
+                    val priceData = bybitResponse.data
+                    ResponseMapper.success<PriceData>(
                         data = priceData,
                         exchange = Exchange.BYBIT,
                         originalResponse = bybitResponse.toString(),
                         includeDebugInfo = false // Hide sensitive data in production
                     )
                 } else {
-                    ResponseMapper.error(
-                        error = bybitResponse.retMsg,
+                    ResponseMapper.error<PriceData>(
+                        error = bybitResponse.error ?: "Unknown error",
                         exchange = Exchange.BYBIT,
                         originalResponse = bybitResponse.toString()
                     )
@@ -94,7 +93,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.error(exception) { "Market data fetch failed: symbol=$validatedSymbol, category=$category, duration=${duration}ms" }
-                ResponseMapper.error(
+                ResponseMapper.error<PriceData>(
                     error = exception.message ?: "Unknown error",
                     exchange = Exchange.BYBIT
                 )
@@ -121,7 +120,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
             if (validSymbols.isEmpty()) {
                 val duration = System.currentTimeMillis() - startTime
                 logger.warn { "All symbols validation failed: symbols=$symbols, duration=${duration}ms" }
-                return ResponseMapper.error(
+                return ResponseMapper.error<BatchPriceResponse>(
                     error = "No valid symbols provided. All symbols failed validation.",
                     exchange = Exchange.BYBIT
                 )
@@ -136,7 +135,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
         }
         
         return runCatching { 
-            bybitClient.getMarketTickers(validatedSymbols, category) 
+            BybitExchangeService.getPrices(validatedSymbols)
         }.fold(
             onSuccess = { bybitResponse ->
                 val duration = System.currentTimeMillis() - startTime
@@ -148,23 +147,17 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
                 }
                 
                 // Transform to universal format
-                if (bybitResponse.retCode == 0) {
-                    val priceDataList = bybitResponse.result.list.map { tickerItem ->
-                        ResponseMapper.mapBybitTickerToPriceData(tickerItem)
-                    }
-                    val batchResponse = BatchPriceResponse(
-                        prices = priceDataList,
-                        exchange = Exchange.BYBIT
-                    )
-                    ResponseMapper.success(
+                if (bybitResponse.success && bybitResponse.data != null) {
+                    val batchResponse = bybitResponse.data
+                    ResponseMapper.success<BatchPriceResponse>(
                         data = batchResponse,
                         exchange = Exchange.BYBIT,
                         originalResponse = bybitResponse.toString(),
                         includeDebugInfo = false // Hide sensitive data in production
                     )
                 } else {
-                    ResponseMapper.error(
-                        error = bybitResponse.retMsg,
+                    ResponseMapper.error<BatchPriceResponse>(
+                        error = bybitResponse.error ?: "Unknown error",
                         exchange = Exchange.BYBIT,
                         originalResponse = bybitResponse.toString()
                     )
@@ -173,7 +166,7 @@ class UniversalPriceService(private val bybitClient: BybitApiClient) {
             onFailure = { exception ->
                 val duration = System.currentTimeMillis() - startTime
                 logger.error(exception) { "Batch market data fetch failed: symbols=${validatedSymbols.size}, category=$category, duration=${duration}ms" }
-                ResponseMapper.error(
+                ResponseMapper.error<BatchPriceResponse>(
                     error = exception.message ?: "Unknown error",
                     exchange = Exchange.BYBIT
                 )

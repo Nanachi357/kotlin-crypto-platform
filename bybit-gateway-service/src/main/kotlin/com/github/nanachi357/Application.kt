@@ -1,6 +1,5 @@
 package com.github.nanachi357
 
-import com.github.nanachi357.clients.BybitApiClient
 import com.github.nanachi357.plugins.configureRouting
 import com.github.nanachi357.plugins.configureErrorHandling
 import com.github.nanachi357.plugins.configureMonitoring
@@ -8,7 +7,6 @@ import com.github.nanachi357.plugins.configureSecurity
 import com.github.nanachi357.services.PriceService
 import com.github.nanachi357.services.BatchPriceService
 import com.github.nanachi357.services.UniversalPriceService
-import com.github.nanachi357.utils.HttpClientFactory
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -48,16 +46,12 @@ fun Application.module() {
     // Configure security (must be before routing)
     configureSecurity()
     
-    // Create HTTP client for external API calls
-    val httpClient = HttpClientFactory.create()
-    val bybitClient = BybitApiClient(httpClient)
-    
     // Create service layer with functional error handling
-    val priceService = PriceService(bybitClient)
-    val batchPriceService = BatchPriceService(bybitClient)
+    val priceService = PriceService()
+    val batchPriceService = BatchPriceService()
     
     // Create universal service layer for new exchange abstraction
-    val universalPriceService = UniversalPriceService(bybitClient)
+    val universalPriceService = UniversalPriceService()
     
     // Configure error handling (must be before routing)
     configureErrorHandling()
