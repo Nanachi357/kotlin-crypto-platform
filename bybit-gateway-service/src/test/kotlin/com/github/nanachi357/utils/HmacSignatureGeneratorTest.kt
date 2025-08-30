@@ -169,7 +169,7 @@ class HmacSignatureGeneratorTest {
         val unicodeParams = mapOf(
             "symbol" to "BTC/USDT",
             "name" to "Bitcoin",
-            "description" to "Криптовалюта"
+            "description" to "Cryptocurrency"
         )
         
         try {
@@ -179,7 +179,7 @@ class HmacSignatureGeneratorTest {
             assertTrue(signature.isNotBlank())
             
             // Verify sorted parameters with unicode
-            val expectedQueryString = "description=Криптовалюта&name=Bitcoin&symbol=BTC/USDT"
+            val expectedQueryString = "description=Cryptocurrency&name=Bitcoin&symbol=BTC/USDT"
             
             // Create a fresh secretKey for validation
             val validationKey = "test_secret".toCharArray()

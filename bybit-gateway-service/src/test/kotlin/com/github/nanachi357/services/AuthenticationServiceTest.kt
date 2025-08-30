@@ -391,7 +391,7 @@ class AuthenticationServiceTest {
         val unicodeParams = mapOf(
             "symbol" to "BTC/USDT",
             "name" to "Bitcoin",
-            "description" to "Криптовалюта"
+            "description" to "Cryptocurrency"
         )
         
         // Create separate CharArrays for generation and validation
@@ -405,7 +405,7 @@ class AuthenticationServiceTest {
             assertTrue(signature.isNotBlank())
             
             // Verify sorted parameters with unicode
-            val expectedQueryString = "description=Криптовалюта&name=Bitcoin&symbol=BTC/USDT"
+            val expectedQueryString = "description=Cryptocurrency&name=Bitcoin&symbol=BTC/USDT"
             assertTrue(signatureGenerator.validateSignature(secretKey2, expectedQueryString, signature))
         } finally {
             secretKey1.fill('\u0000')
